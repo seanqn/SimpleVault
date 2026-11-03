@@ -16,3 +16,4 @@ pub struct Credential {
     pub email: String,
     pub note: String,
 }
+pub mod crypto;

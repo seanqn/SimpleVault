@@ -75,3 +75,25 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 No GUI, production data, credentials, Qt installation, or network access is required
 for the current crate. Each later phase should add its own behavioral checks while
 keeping these core tests fast. Build desktop bundles only when a phase needs them.
+
+## Phase 2 implementation status
+
+Phase 1 was checked against its requirements and all three edit-cache tests passed.
+The Rust crypto module now implements the legacy XChaCha20-Poly1305 format with
+random OS-generated nonces and empty associated data. It preserves the six UTF-16
+code-unit encryption minimum used by QString. Malformed decrypted UTF-8 is rejected
+rather than replaced with replacement characters. Nonce length is enforced by type.
+
+Keys and owned plaintext buffers use zeroizing storage; neither SecretKey nor the
+edit cache implements Debug. Caller copies and existing Credential strings remain
+outside the crypto service's erasure guarantee. KeyProvider defines the adapter
+boundary; real keychain access and persistence wiring remain later phases.
+
+The public fixture uses key bytes 7, nonce bytes 9, and plaintext `secret🔐`.
+Regenerate it with `python scripts/crypto_fixture.py` on a machine with libsodium.
+Rust encryption matches the C output byte for byte, and Rust decrypts that output.
+Tests also cover wrong keys, modifications to every ciphertext/tag byte, nonce
+modification, short ciphertext, invalid key size, password length and Unicode.
+Six tests pass in total. Rust 1.85 or newer is required by the dependency set;
+validation used the installed Rust 1.99.1 toolchain. Initial dependency installation
+requires registry access; fixture regeneration requires libsodium, normal tests do not.
