@@ -85,3 +85,6 @@ CMakeLists.txt.user*
 *-Release/
 *-Profile/
 *tests/
+
+# Rust workspace build artifacts
+/target/
