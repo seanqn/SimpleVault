@@ -1,0 +1,17 @@
+[package]
+name = "simplevault-desktop"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]
+dev-vault = ["vault-bridge/dev-vault"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+vault-bridge = { path = "../rust/vault-bridge" }
+tauri = { version = "2", features = [] }

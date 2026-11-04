@@ -6,14 +6,15 @@ Source baseline: `feature/macos-agent`, commit
 ## Target architecture
 
 Use a platform-independent Rust domain/service library, SQLite repository adapters,
-a small Tauri desktop host, and a TypeScript web frontend. Tauri is the proposed
-host for later phases; it is not installed or integrated in this first slice.
+a small Tauri desktop host, and a TypeScript web frontend. Phase 5 now integrates
+the host and frontend through the independent `vault-bridge` crate.
 Keep crypto, database access, keys, and commit decisions in Rust. Expose explicit
 commands and safe response types to the frontend, never raw keys or repository handles.
 Keep platform lifecycle and tray positioning out of the domain library.
 
 The existing C++/QML app remains the reference until replacement parity is verified.
-The Rust library currently runs only in tests; it does not replace the running Qt app.
+The Rust application can run through the desktop host with a disposable development
+vault. Production cutover awaits native authentication and macOS parity validation.
 
 ## Small reviewable phases
 
@@ -38,8 +39,8 @@ The Rust library currently runs only in tests; it does not replace the running Q
    draft and block navigation; clean/empty/save paths must explicitly finish the
    session. Test transitions, rollback, deletion of selected groups, lock, and quit.
    Do not seed mock groups in production startup.
-5. **Frontend and desktop host.** Port QML flows to TypeScript components backed
-   by typed commands. Preserve the 700×600 white authentication window, centered
+5. **Frontend and desktop host (implemented; native parity pending).** Port QML
+   flows to TypeScript components backed by typed commands. Preserve the 700×600 white authentication window, centered
    250×300 modal, and UID footer. Preserve the 320×400 tray popup, #2B2B2B surface,
    #3D3D3D 1px border, 12px corners, 4px anchor offset and dismiss-on-blur behavior.
    `Home.qml` currently contains an empty tray surface; `HomePane.qml` contains a
@@ -70,9 +71,9 @@ paths explicitly and retains drafts on failed saves.
 From the repository root, with a Rust toolchain on PATH:
 
 ```sh
-cargo test --workspace --locked
+cargo test --workspace --all-features --locked
 cargo fmt --all -- --check
-cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 ```
 
 No GUI, production data, credentials, or Qt installation is required for the tests.
@@ -132,6 +133,37 @@ Drop. Successful lock releases the repository/key and clears cache-owned secrets
 Startup seeds no mock data. Controller integration tests use temporary SQLite files
 and injected failures to verify the state transitions and retry behavior.
 
-See [controller commands and lifecycle](controller.md). Frontend rendering and
-command serialization are phase 5; master-password/key provisioning and native
-keychain authentication are not implemented by this phase's key-based orchestration.
+See [controller commands and lifecycle](controller.md). Master-password/key
+provisioning and native keychain authentication are not implemented by this
+phase's key-based orchestration.
+
+## Phase 5 implementation status
+
+React/TypeScript views now call the controller through typed Rust commands in
+`vault-bridge` and a Tauri host in `desktop/`. The authentication view preserves
+the white 700×600 window, centered 250×300 card, and UID footer. The unlocked
+surface preserves the 320×400 dimensions, #2B2B2B background, #3D3D3D border,
+and 12px CSS corners. Group management, credential editing, search, explicit
+password reveal, and error/retry dialogs are new UI built around the existing
+controller; the legacy empty tray surface did not implement these screens.
+
+Ordinary responses contain no passwords or keys. Password changes and reveal
+are explicit commands. Lock/quit support save, discard, and cancel; failed saves
+retain the draft. Successful mutations with a failed subsequent refresh are
+distinguished from failed writes so the UI does not repeat a committed action.
+An opt-in development feature creates a temporary encrypted SQLite vault with
+a backend-only random key. Default builds use an unavailable key provider and
+remain locked; no production authentication or initialization is implied.
+
+Validation includes 34 Rust tests, five browser integration tests against the real
+Rust/SQLite command handler, TypeScript/Vite builds, and Linux desktop compilation
+and Clippy. Native WebKit startup could not be validated in the cloud's local
+library environment. The browser transport tests do not establish native IPC,
+window resizing, or platform behavior.
+
+The 4px tray anchor offset, dismiss-on-blur, transparent native corners,
+keychain/UID provisioning, macOS reference screenshots, and signed bundle checks
+remain open for phase 6. The frontend only hides revealed passwords on blur; it
+does not yet hide the native window. See [frontend setup and validation](frontend.md)
+for reproducible commands and the remaining platform checks. Legacy Qt remains
+available until those checks and the data migration review pass.

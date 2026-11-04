@@ -1,0 +1,10 @@
+{
+  "identifier": "main",
+  "description": "Main vault window event subscriptions and dragging.",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-start-dragging"
+  ]
+}

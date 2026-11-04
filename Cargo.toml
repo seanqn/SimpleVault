@@ -1,3 +1,5 @@
 [workspace]
-members = ["rust/vault-core", "rust/vault-storage", "rust/vault-app"]
+members = ["rust/vault-core", "rust/vault-storage", "rust/vault-app", "rust/vault-bridge"]
 resolver = "2"
+
+exclude = ["desktop"]

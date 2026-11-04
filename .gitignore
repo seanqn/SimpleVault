@@ -88,3 +88,11 @@ CMakeLists.txt.user*
 
 # Rust workspace build artifacts
 /target/
+
+# Frontend and desktop outputs
+/frontend/node_modules/
+/frontend/dist/
+/frontend/test-results/
+/frontend/playwright-report/
+/desktop/target/
+/desktop/gen/
