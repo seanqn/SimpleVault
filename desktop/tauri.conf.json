@@ -4,9 +4,15 @@
   "version": "0.1.0",
   "identifier": "com.seanqn.simplevault",
   "build": {
-    "beforeDevCommand": "npm --prefix ../frontend run dev",
+    "beforeDevCommand": {
+    "script": "npm run dev",
+    "cwd": "../frontend"
+  },
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm --prefix ../frontend run build",
+    "beforeBuildCommand": {
+    "script": "npm run build",
+    "cwd": "../frontend"
+  },
     "frontendDist": "../frontend/dist"
   },
   "app": {

@@ -8,8 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "test": "playwright test",
     "desktop": "cd ../desktop && tauri",
-    "desktop:dev": "cd ../desktop && tauri dev --features dev-vault",
+    "desktop:dev": "cd ../desktop && tauri dev",
     "desktop:build": "cd ../desktop && tauri build",
+    "desktop:demo": "cd ../desktop && tauri dev --features dev-vault",
     "format:check": "prettier --check src e2e *.ts *.json index.html"
   },
   "dependencies": {
