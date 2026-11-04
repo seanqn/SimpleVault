@@ -1,4 +1,5 @@
 use crate::Credential;
+use zeroize::Zeroize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CredentialField {
@@ -32,7 +33,8 @@ impl TryFrom<&str> for CredentialField {
 
 /// Holds a draft until the application layer successfully commits it.
 /// Reset explicitly on cancel, successful save, or vault lock; never on failed save.
-/// Strings are ordinary allocations, not guaranteed zeroized secret storage.
+/// Owned original/draft strings are zeroized on replacement, reset, and drop.
+/// Copies retained by callers are outside this guarantee.
 #[derive(Default)]
 pub struct CredentialEditCache {
     session: Option<EditSession>,
@@ -59,6 +61,7 @@ impl CredentialEditCache {
 
     /// Caller must resolve the previous draft before starting a different edit.
     pub fn start_edit(&mut self, credential: Credential) {
+        self.reset();
         self.session = Some(EditSession {
             original: credential.clone(),
             draft: credential,
@@ -69,8 +72,12 @@ impl CredentialEditCache {
         self.session.as_ref().map(|session| &session.draft)
     }
 
-    pub fn update(&mut self, field: CredentialField, value: String) -> Result<(), EditError> {
-        let draft = &mut self.session.as_mut().ok_or(EditError::NoActiveEdit)?.draft;
+    pub fn update(&mut self, field: CredentialField, mut value: String) -> Result<(), EditError> {
+        let Some(session) = self.session.as_mut() else {
+            value.zeroize();
+            return Err(EditError::NoActiveEdit);
+        };
+        let draft = &mut session.draft;
         let column = match field {
             CredentialField::Organization => &mut draft.org_name,
             CredentialField::Username => &mut draft.username,
@@ -78,6 +85,7 @@ impl CredentialEditCache {
             CredentialField::Email => &mut draft.email,
             CredentialField::Note => &mut draft.note,
         };
+        column.zeroize();
         *column = value;
         Ok(())
     }
@@ -100,8 +108,17 @@ impl CredentialEditCache {
 
     /// Clear both edit and provisional-row state, unlike the legacy partial reset.
     pub fn reset(&mut self) {
-        self.session = None;
+        if let Some(mut session) = self.session.take() {
+            session.original.zeroize();
+            session.draft.zeroize();
+        }
         self.default_row_exists = false;
+    }
+}
+
+impl Drop for CredentialEditCache {
+    fn drop(&mut self) {
+        self.reset();
     }
 }
 

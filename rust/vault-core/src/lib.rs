@@ -19,3 +19,16 @@ pub struct Credential {
 pub mod crypto;
 
 pub mod repository;
+
+// Used by application-owned temporary rows and the edit cache. Callers retaining
+// ordinary Credential copies must explicitly clear those copies themselves.
+impl zeroize::Zeroize for Credential {
+    fn zeroize(&mut self) {
+        self.content_id.zeroize();
+        self.org_name.zeroize();
+        self.username.zeroize();
+        self.password.zeroize();
+        self.email.zeroize();
+        self.note.zeroize();
+    }
+}

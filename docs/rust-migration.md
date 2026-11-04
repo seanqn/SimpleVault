@@ -22,7 +22,8 @@ The Rust library currently runs only in tests; it does not replace the running Q
    Keep the existing role names available through checked conversion. Test inactive,
    clean, dirty, empty, revert, Unicode, identity, and reset behavior. Reset also
    clears provisional-row state. No encryption or persistence is claimed here;
-   ordinary Rust strings do not provide guaranteed memory zeroization.
+   ordinary Rust strings do not provide guaranteed memory zeroization. Phase 4
+   adds explicit clearing for the cache and controller-owned temporary values.
 2. **Crypto service (completed).** Preserve XChaCha20-Poly1305's 32-byte key, 24-byte nonce,
    16-byte tag and existing no-associated-data format. Add cross-language fixtures,
    wrong-key and tampering tests before replacing libsodium calls. Define secret
@@ -31,7 +32,7 @@ The Rust library currently runs only in tests; it does not replace the running Q
    CRUD, UUID BLOB compatibility, transactions, and foreign-key cascades. Back up
    existing databases before versioned migrations. Investigate plaintext password
    storage in the current schema rather than assuming crypto is already wired in.
-4. **Application/controller.** Split VaultManager into group operations, edit
+4. **Application/controller (completed).** Split VaultManager into group operations, edit
    sessions, selection state, and authentication orchestration. Use stable IDs at
    the command boundary rather than UI row indices. A failed save must retain the
    draft and block navigation; clean/empty/save paths must explicitly finish the
@@ -61,7 +62,8 @@ The Rust library currently runs only in tests; it does not replace the running Q
   input, and links macOS frameworks unconditionally.
 
 The Rust storage adapter fixes the rename binding and foreign-key enforcement;
-the legacy source remains a reference. Controller issues belong to phase 4.
+the legacy source remains a reference. The Rust controller now finishes all edit
+paths explicitly and retains drafts on failed saves.
 
 ## Validation
 
@@ -111,6 +113,25 @@ preserves even empty/short values. A key check prevents opening an encrypted vau
 for writes under the wrong key.
 
 See [storage contracts and migration procedure](storage.md) for API behavior,
-backup/recovery details, and encryption limits. The controller still needs to wire
-this adapter to key acquisition, edit-cache lifecycle, and user-facing errors in
-phase 4. No production database was touched.
+backup/recovery details, and encryption limits. The phase 4 application layer now wires
+this adapter to key acquisition and the edit-cache lifecycle. No production database
+was touched.
+
+## Phase 4 implementation status
+
+The independent `vault-app` crate integrates `VaultController`, session lifecycle,
+the existing `KeyProvider` interface, and the production SQLite factory. Group and
+credential commands use stable UUID IDs. Selection changes preflight the target and
+finish editing before changing state; save failures retain the draft and block the
+transition. Blank new rows are discarded, unchanged edits finish without writes,
+and clearing an existing row saves its values rather than implicitly deleting it.
+
+Unlock validates an existing database and its key before exposing the controller.
+Lock/quit support explicit save, discard, or cancel, and no persistence runs during
+Drop. Successful lock releases the repository/key and clears cache-owned secrets.
+Startup seeds no mock data. Controller integration tests use temporary SQLite files
+and injected failures to verify the state transitions and retry behavior.
+
+See [controller commands and lifecycle](controller.md). Frontend rendering and
+command serialization are phase 5; master-password/key provisioning and native
+keychain authentication are not implemented by this phase's key-based orchestration.

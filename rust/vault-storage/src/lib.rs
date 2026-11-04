@@ -40,10 +40,19 @@ pub struct SqliteRepository {
 
 impl SqliteRepository {
     pub fn open(path: impl AsRef<Path>, key: SecretKey) -> Result<Self> {
-        let mut connection = connect(path.as_ref(), true)?;
+        Self::open_with_creation(path.as_ref(), key, true)
+    }
+
+    /// Open an existing vault without silently creating one after a path typo.
+    pub fn open_existing(path: impl AsRef<Path>, key: SecretKey) -> Result<Self> {
+        Self::open_with_creation(path.as_ref(), key, false)
+    }
+
+    fn open_with_creation(path: &Path, key: SecretKey, create: bool) -> Result<Self> {
+        let mut connection = connect(path, create)?;
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         match migration::version(&tx)? {
-            0 if migration::is_empty(&tx)? => {
+            0 if create && migration::is_empty(&tx)? => {
                 tx.execute_batch(include_str!("schema.sql"))?;
                 write_key_check(&tx, &key)?;
             }

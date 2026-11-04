@@ -9,8 +9,10 @@ validated with Rust 1.99.1 on Linux.
 
 ## Opening a vault
 
-The future controller obtains an owned `SecretKey` from its `KeyProvider` and
-passes it to `SqliteRepository::open(path, key)`. The caller selects a private
+The controller obtains an owned `SecretKey` from its `KeyProvider` and uses
+`SqliteRepository::open_existing(path, key)` through the `SqliteVault` factory.
+That path refuses missing or uninitialized vaults. Explicit provisioning uses
+`SqliteRepository::open(path, key)`. The caller selects a private
 application-data directory; the adapter does not locate or open a user's real
 vault automatically. Parent directories must already exist. A new empty database
 is initialized at `PRAGMA user_version = 1` within a transaction. An existing v1
@@ -48,9 +50,10 @@ are plaintext. This is not whole-database encryption.
 `encrypt_stored_password` accepts all existing values, including empty and short
 passwords. The original `encrypt` entry point still enforces its legacy six-UTF-16-
 unit rule. Password-strength policy is a controller concern, not a storage rule.
-Service-owned temporary plaintext is zeroized; returned `Credential` values and
-the edit cache still contain ordinary strings, as documented in phase 1. SQLite
-and callers may also retain copies that are outside this erasure guarantee.
+Service-owned temporary plaintext is zeroized. Returned `Credential` values contain
+ordinary strings; the controller now wraps temporary rows in `Zeroizing`, and the
+edit cache clears its owned fields on replacement/reset/drop. SQLite and callers
+may retain other copies outside this erasure guarantee.
 
 ## Legacy migration and recovery
 

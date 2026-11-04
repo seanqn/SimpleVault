@@ -5,6 +5,8 @@ The previous Qt/C++ application is retained under `legacy/` for reference.
 
 - `rust/vault-core`: credential domain, edit cache, crypto, and repository interface.
 - `rust/vault-storage`: SQLite adapter with encrypted passwords and backed-up legacy migration.
+- `rust/vault-app`: controller commands, editing, and key-based session lifecycle.
+- [Controller API and lifecycle](docs/controller.md)
 - [Migration plan](docs/rust-migration.md)
 - [Storage API, migration, and recovery](docs/storage.md)
 
@@ -17,7 +19,8 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
 The Rust workspace does not depend on the legacy C++ application. It is currently
-a tested library; the controller, frontend, and macOS host are subsequent phases.
+a tested library with controller integration; the frontend and macOS host are
+subsequent phases.
 
 ## Historical project notes
 
