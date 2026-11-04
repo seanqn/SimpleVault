@@ -17,3 +17,5 @@ pub struct Credential {
     pub note: String,
 }
 pub mod crypto;
+
+pub mod repository;

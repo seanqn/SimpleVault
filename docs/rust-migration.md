@@ -17,17 +17,17 @@ The Rust library currently runs only in tests; it does not replace the running Q
 
 ## Small reviewable phases
 
-1. **Domain and edit cache (this change).** Preserve 16-byte credential IDs and
+1. **Domain and edit cache (completed).** Preserve 16-byte credential IDs and
    the five editable fields. Replace string dispatch internally with typed fields.
    Keep the existing role names available through checked conversion. Test inactive,
    clean, dirty, empty, revert, Unicode, identity, and reset behavior. Reset also
    clears provisional-row state. No encryption or persistence is claimed here;
    ordinary Rust strings do not provide guaranteed memory zeroization.
-2. **Crypto service.** Preserve XChaCha20-Poly1305's 32-byte key, 24-byte nonce,
+2. **Crypto service (completed).** Preserve XChaCha20-Poly1305's 32-byte key, 24-byte nonce,
    16-byte tag and existing no-associated-data format. Add cross-language fixtures,
    wrong-key and tampering tests before replacing libsodium calls. Define secret
    ownership/zeroization and key-provider interfaces before connecting persistence.
-3. **SQLite and repository.** Use temporary databases to verify group/credential
+3. **SQLite and repository (completed).** Use temporary databases to verify group/credential
    CRUD, UUID BLOB compatibility, transactions, and foreign-key cascades. Back up
    existing databases before versioned migrations. Investigate plaintext password
    storage in the current schema rather than assuming crypto is already wired in.
@@ -60,7 +60,8 @@ The Rust library currently runs only in tests; it does not replace the running Q
 - The CMake configuration has developer-specific Qt paths and a missing QML test
   input, and links macOS frameworks unconditionally.
 
-These findings are not patched by the first service slice.
+The Rust storage adapter fixes the rename binding and foreign-key enforcement;
+the legacy source remains a reference. Controller issues belong to phase 4.
 
 ## Validation
 
@@ -72,8 +73,9 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
-No GUI, production data, credentials, Qt installation, or network access is required
-for the current crate. Each later phase should add its own behavioral checks while
+No GUI, production data, credentials, or Qt installation is required for the tests.
+The storage adapter builds bundled SQLite with a C compiler. Initial dependency
+installation requires registry access; cached test runs work offline. Each later phase should add its own behavioral checks while
 keeping these core tests fast. Build desktop bundles only when a phase needs them.
 
 ## Phase 2 implementation status
@@ -97,3 +99,18 @@ modification, short ciphertext, invalid key size, password length and Unicode.
 Six tests pass in total. Rust 1.85 or newer is required by the dependency set;
 validation used the installed Rust 1.99.1 toolchain. Initial dependency installation
 requires registry access; fixture regeneration requires libsodium, normal tests do not.
+
+## Phase 3 implementation status
+
+The reference application now lives in `legacy/`. The independent `vault-storage`
+crate implements the core `VaultRepository` interface with encrypted-password
+SQLite persistence. Version-one schema initialization, explicit backed-up legacy
+migration, CRUD, atomic batch saves, and cascades are implemented. Legacy passwords
+were confirmed to be plaintext; migration encrypts them with a supplied key and
+preserves even empty/short values. A key check prevents opening an encrypted vault
+for writes under the wrong key.
+
+See [storage contracts and migration procedure](storage.md) for API behavior,
+backup/recovery details, and encryption limits. The controller still needs to wire
+this adapter to key acquisition, edit-cache lifecycle, and user-facing errors in
+phase 4. No production database was touched.

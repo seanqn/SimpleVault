@@ -42,6 +42,15 @@ pub fn encrypt(
     if password.encode_utf16().count() < 6 {
         return Err(CryptoError::InvalidInput);
     }
+    encrypt_stored_password(password, key)
+}
+
+/// Encrypt an existing stored value, including empty or short legacy passwords.
+/// Password-strength policy belongs to the application, not data migration.
+pub fn encrypt_stored_password(
+    password: Zeroizing<String>,
+    key: &SecretKey,
+) -> Result<EncryptedCredential, CryptoError> {
     let mut nonce = [0; 24];
     OsRng
         .try_fill_bytes(&mut nonce)

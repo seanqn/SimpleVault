@@ -83,7 +83,7 @@ impl CredentialEditCache {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.draft().map_or(true, |draft| {
+        self.draft().is_none_or(|draft| {
             draft.org_name.is_empty()
                 && draft.username.is_empty()
                 && draft.password.is_empty()
@@ -95,7 +95,7 @@ impl CredentialEditCache {
     pub fn is_clean(&self) -> bool {
         self.session
             .as_ref()
-            .map_or(true, |session| session.original == session.draft)
+            .is_none_or(|session| session.original == session.draft)
     }
 
     /// Clear both edit and provisional-row state, unlike the legacy partial reset.

@@ -1,0 +1,12 @@
+[package]
+name = "vault-storage"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+
+[dependencies]
+vault-core = { path = "../vault-core" }
+rusqlite = { version = "0.32", features = ["bundled", "backup"] }
+zeroize = "1.8"
+thiserror = "2"
+tempfile = "3"
