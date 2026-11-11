@@ -38,3 +38,16 @@ test("create a persistent vault and authenticate its UUID", async ({
     page.getByRole("region", { name: "Vault", exact: true }),
   ).toBeVisible({ timeout: 30000 });
 });
+
+test("quit is available during first-run registration", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Create Vault" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Quit SimpleVault", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Vault closed" }),
+  ).toBeVisible();
+});

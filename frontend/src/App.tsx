@@ -228,6 +228,17 @@ export function App() {
   const locked = snapshot?.session !== "unlocked";
   return (
     <main className={locked ? "auth-window" : "vault-window"} aria-busy={busy}>
+      {available && (
+        <button
+          className="app-quit icon-button"
+          title="Quit SimpleVault"
+          aria-label="Quit SimpleVault"
+          disabled={busy}
+          onClick={() => exit("shutdown")}
+        >
+          ⏻
+        </button>
+      )}
       {!available ? (
         <section className="auth-card">
           <LockIcon />
@@ -352,15 +363,6 @@ export function App() {
                 onClick={() => exit("lock")}
               >
                 ⌑
-              </button>
-              <button
-                className="icon-button"
-                title="Quit SimpleVault"
-                aria-label="Quit SimpleVault"
-                disabled={disabled}
-                onClick={() => exit("shutdown")}
-              >
-                ×
               </button>
             </div>
           </header>
