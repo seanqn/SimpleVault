@@ -594,3 +594,20 @@ h2 {
 .password-label > label {
   margin-bottom: 0;
 }
+
+.auth-card.password-auth {
+  height: auto;
+  min-height: 300px;
+  width: min(340px, calc(100vw - 40px));
+}
+.password-auth label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+}
+.password-auth input {
+  width: 100%;
+  box-sizing: border-box;
+}

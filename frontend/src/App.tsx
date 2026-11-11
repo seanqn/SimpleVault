@@ -44,6 +44,8 @@ function LockIcon() {
   );
 }
 export function App() {
+  const [masterPassword, setMasterPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const snapshotRef = useRef<Snapshot | null>(null);
   const [fields, setFields] = useState<EditFields>(emptyFields);
@@ -253,7 +255,10 @@ export function App() {
         </section>
       ) : snapshot.session === "locked" ? (
         <>
-          <section className="auth-card" aria-labelledby="unlock-title">
+          <section
+            className={`auth-card ${snapshot.temporary ? "" : "password-auth"}`}
+            aria-labelledby="unlock-title"
+          >
             <div className="lock-badge">
               <LockIcon />
             </div>
@@ -264,17 +269,66 @@ export function App() {
                 ? "A quiet place to try your vault. This session is temporary."
                 : "Your credentials, securely kept on this device."}
             </p>
+            {!snapshot.temporary && (
+              <>
+                <label>
+                  Master password
+                  <input
+                    type="password"
+                    autoComplete={
+                      snapshot.uid ? "current-password" : "new-password"
+                    }
+                    value={masterPassword}
+                    maxLength={1024}
+                    onChange={(e) => setMasterPassword(e.target.value)}
+                  />
+                </label>
+                {!snapshot.uid && (
+                  <label>
+                    Confirm master password
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmation}
+                      onChange={(e) => setConfirmation(e.target.value)}
+                    />
+                  </label>
+                )}
+              </>
+            )}
             <button
               className="primary"
-              disabled={busy}
-              onClick={() => void perform({ type: "unlock" })}
+              disabled={
+                busy ||
+                (!snapshot.temporary &&
+                  (!masterPassword ||
+                    (!snapshot.uid && masterPassword !== confirmation)))
+              }
+              onClick={() => {
+                const action: Request = snapshot.temporary
+                  ? { type: "unlock" }
+                  : snapshot.uid
+                    ? {
+                        type: "unlock_vault",
+                        uid: snapshot.uid,
+                        password: masterPassword,
+                      }
+                    : { type: "create_vault", password: masterPassword };
+                setMasterPassword("");
+                setConfirmation("");
+                void perform(action);
+              }}
             >
-              {busy ? "Unlocking…" : "Unlock Vault"}
+              {busy
+                ? "Working…"
+                : !snapshot.temporary && !snapshot.uid
+                  ? "Create Vault"
+                  : "Unlock Vault"}
             </button>
             <small>
               {snapshot.temporary
                 ? "Cleared when you quit"
-                : "Authenticate with your device"}
+                : "Unlock with your master password"}
             </small>
           </section>
           <footer className="auth-footer">

@@ -92,6 +92,15 @@ impl<F: VaultFactory> VaultApplication<F> {
             return Err(UnlockError::InvalidState);
         }
         let key = provider.load_key().map_err(UnlockError::Key)?;
+        self.unlock_key(key)
+    }
+    pub fn unlock_key<K>(
+        &mut self,
+        key: SecretKey,
+    ) -> Result<(), UnlockError<K, F::Error, RepositoryError<F>>> {
+        if self.state() != SessionState::Locked {
+            return Err(UnlockError::InvalidState);
+        }
         let repository = self.factory.open(key).map_err(UnlockError::Open)?;
         let controller = VaultController::new(repository).map_err(UnlockError::Repository)?;
         self.controller = Some(controller);

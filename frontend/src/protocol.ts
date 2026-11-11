@@ -30,6 +30,8 @@ export interface EditFields {
   password?: string;
 }
 export type Request =
+  | { type: "create_vault"; password: string }
+  | { type: "unlock_vault"; uid: string; password: string }
   | {
       type:
         | "snapshot"

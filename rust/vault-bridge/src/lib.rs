@@ -14,6 +14,8 @@ pub mod development;
 pub enum Request {
     Snapshot {},
     Unlock {},
+    CreateVault { password: String },
+    UnlockVault { uid: String, password: String },
     CreateGroup { name: String },
     RenameGroup { id: String, name: String },
     RemoveGroup { id: String },
@@ -182,6 +184,13 @@ impl<P: KeyProvider> Bridge<P> {
     }
     fn execute(&mut self, request: Request) -> Result<Option<Zeroizing<String>>, ClientError> {
         match request {
+            Request::CreateVault { password } | Request::UnlockVault { password, .. } => {
+                let _password = Zeroizing::new(password);
+                return Err(ClientError {
+                    code: "unsupported",
+                    message: "This vault does not support password provisioning.",
+                });
+            }
             Request::Snapshot {} => {}
             Request::Unlock {} => self
                 .app
@@ -455,3 +464,5 @@ mod tests {
         assert!(!path.exists());
     }
 }
+
+pub mod authentication;

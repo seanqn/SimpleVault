@@ -2,7 +2,14 @@
 use std::io::{self, BufRead, Write};
 use vault_bridge::{development::TemporaryVault, Commands, Request};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut service = TemporaryVault::new()?;
+    let directory = tempfile::tempdir()?;
+    let mut service: Box<dyn Commands> = if std::env::args().any(|a| a == "--password-vault") {
+        Box::new(vault_bridge::authentication::PasswordVault::new(
+            directory.path().join("vault.sqlite"),
+        ))
+    } else {
+        Box::new(TemporaryVault::new()?)
+    };
     for line in io::stdin().lock().lines() {
         let line = zeroize::Zeroizing::new(line?);
         let response = match serde_json::from_str::<Request>(&line) {

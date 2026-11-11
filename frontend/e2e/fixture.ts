@@ -7,13 +7,14 @@ type Harness = {
   failRefreshAfter: (type: string) => void;
   delayNext: (type: string, ms: number) => void;
 };
-export const test = base.extend<{ harness: Harness }>({
+export const test = base.extend<{ harness: Harness; passwordVault: boolean }>({
+  passwordVault: [false, { option: true }],
   harness: [
-    async ({ page }, use) => {
+    async ({ page, passwordVault }, use) => {
       const child = spawn(
         process.env.VAULT_HARNESS ||
           path.resolve("../target/debug/browser-harness"),
-        [],
+        passwordVault ? ["--password-vault"] : [],
         { stdio: ["pipe", "pipe", "pipe"] },
       );
       const waiting: Array<{

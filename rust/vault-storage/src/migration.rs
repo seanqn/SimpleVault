@@ -48,7 +48,16 @@ fn no_custom_code(connection: &Connection) -> Result<()> {
     Ok(())
 }
 pub(crate) fn validate_current(connection: &Connection) -> Result<()> {
-    if tables(connection)? != ["groups", "vault_content", "vault_metadata"] {
+    let names = tables(connection)?;
+    if names != ["groups", "vault_content", "vault_metadata"]
+        && names
+            != [
+                "groups",
+                "password_envelope",
+                "vault_content",
+                "vault_metadata",
+            ]
+    {
         return Err(Error::UnsupportedSchema);
     }
     no_custom_code(connection)?;

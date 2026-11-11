@@ -50,12 +50,10 @@ fn main() {
                     .map_err(|_| std::io::Error::other("could not initialize temporary vault"))?,
             );
             #[cfg(not(feature = "dev-vault"))]
-            let service: Box<dyn Commands> = Box::new(vault_bridge::Bridge::new(
-                app.path().app_data_dir()?.join("vault.sqlite"),
-                vault_bridge::UnavailableKeys,
-                false,
-                None,
-            ));
+            let service: Box<dyn Commands> =
+                Box::new(vault_bridge::authentication::PasswordVault::new(
+                    app.path().app_data_dir()?.join("vault.sqlite"),
+                ));
             app.manage(Mutex::new(Host {
                 service,
                 session: "locked",
